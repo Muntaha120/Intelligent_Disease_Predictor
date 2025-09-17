@@ -90,10 +90,12 @@ st.markdown(page_bg_css, unsafe_allow_html=True)
 # Import your modules
 try:
     from tcm import show_tcm_interface
+
     tcm_available = True
 except ImportError:
     tcm_available = False
     st.sidebar.warning("TCM module not available")
+
 
 # Load datasets and model
 @st.cache_data
@@ -107,6 +109,7 @@ def load_data():
         pd.read_csv("datasets/diets.csv")
     )
 
+
 try:
     sym_des, precautions, workout, description, medications, diets = load_data()
     data_loaded = True
@@ -119,6 +122,7 @@ except FileNotFoundError:
 def load_model():
     return pickle.load(open('models/supprtVectorC.pkl', 'rb'))
 
+
 try:
     svc = load_model()
     model_loaded = True
@@ -130,12 +134,12 @@ except FileNotFoundError:
 # Helper function
 def helper(dis):
     desc = description[description['Disease'] == dis]['Description'].iloc[0] if not \
-    description[description['Disease'] == dis]['Description'].empty else "No description available."
+        description[description['Disease'] == dis]['Description'].empty else "No description available."
     pre_data = precautions[precautions['Disease'] == dis][
         ['Precaution_1', 'Precaution_2', 'Precaution_3', 'Precaution_4']]
     pre = pre_data.values[0].tolist() if not pre_data.empty else []
     med = medications[medications['Disease'] == dis]['Medication'].tolist() if not \
-    medications[medications['Disease'] == dis]['Medication'].empty else []
+        medications[medications['Disease'] == dis]['Medication'].empty else []
     die = diets[diets['Disease'] == dis]['Diet'].tolist() if not diets[diets['Disease'] == dis]['Diet'].empty else []
     wrkout = workout[workout['disease'] == dis]['workout'].tolist() if not workout[workout['disease'] == dis][
         'workout'].empty else []
@@ -198,6 +202,9 @@ def get_predicted_value(patient_symptoms):
 
     if np.any(input_vector):
         prediction_index = svc.predict([input_vector])[0]
+        # To debug the model's raw output, uncomment the line below:
+        # st.info(f"DEBUG: Raw prediction index is {prediction_index}")
+
         if prediction_index in diseases_list:
             return diseases_list[prediction_index]
         else:
@@ -243,39 +250,40 @@ def show_modern_medicine_interface():
 
                     if predicted_disease in diseases_list.values():
                         st.subheader(f"✨ Predicted Disease: **{predicted_disease}**")
-                        dis_des, precautions_list, medications_list, rec_diet_list, workout_list = helper(predicted_disease)
+                        dis_des, precautions_list, medications_list, rec_diet_list, workout_list = helper(
+                            predicted_disease)
 
                         st.markdown("---")
 
                         with st.expander("📝 Disease Description"):
-                            st.info(dis_des)
+                            st.markdown(f"**Description:** {dis_des}")
 
                         with st.expander("🛡️ Precautions to Take"):
                             if precautions_list:
                                 for i, pre in enumerate(precautions_list):
                                     if pre and pre != 'nan':
-                                        st.write(f"- {pre.capitalize()}")
+                                        st.markdown(f"- **{pre.capitalize()}**")
                             else:
                                 st.write("No specific precautions found.")
 
                         with st.expander("💊 Recommended Medications"):
                             if medications_list:
                                 for med in medications_list:
-                                    st.write(f"- {med.capitalize()}")
+                                    st.markdown(f"- **{med.capitalize()}**")
                             else:
                                 st.write("No specific medications found (consult a doctor).")
 
                         with st.expander("🥦 Recommended Diet"):
                             if rec_diet_list:
                                 for diet in rec_diet_list:
-                                    st.write(f"- {diet.capitalize()}")
+                                    st.markdown(f"- **{diet.capitalize()}**")
                             else:
                                 st.write("No specific diet recommendations found.")
 
                         with st.expander("🏋️‍♂️ Suggested Workouts"):
                             if workout_list:
                                 for wrkout in workout_list:
-                                    st.write(f"- {wrkout.capitalize()}")
+                                    st.markdown(f"- **{wrkout.capitalize()}**")
                             else:
                                 st.write("No specific workout recommendations found.")
 
